@@ -9,21 +9,17 @@ const PORT = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
-
-// Serve static files from the 'public' directory
 app.use(express.static('public'));
 
-// POST /compile to handle code execution
 app.post('/compile', (req, res) => {
     const { code, language } = req.body;
 
     if (language === 'java') {
-        // Handle Java code
-        const fileName = 'TempCode.java';
+        const fileName = 'Main.java';
         const filePath = path.join(fileName);
 
         fs.writeFile(filePath, code, (err) => {
-            if (err) return res.status(500).send('Error writing Java file.');
+            if (err) return res.status(500).send('Error writing Java file: ' + err.message);
 
             exec(`javac ${filePath}`, (compileErr, compileStdout, compileStderr) => {
                 if (compileErr) {
@@ -35,9 +31,15 @@ app.post('/compile', (req, res) => {
                     if (runErr) {
                         return res.status(500).send(`Java Execution Error: ${runStderr}`);
                     }
+
                     res.send(runStdout);
-                    fs.unlinkSync(filePath);
-                    fs.unlinkSync(`${className}.class`);
+
+                    try {
+                        fs.unlinkSync(filePath);
+                        fs.unlinkSync(`${className}.class`);
+                    } catch (unlinkErr) {
+                        console.error('Error cleaning up files:', unlinkErr.message);
+                    }
                 });
             });
         });
@@ -46,25 +48,25 @@ app.post('/compile', (req, res) => {
         const filePath = path.join(fileName);
 
         fs.writeFile(filePath, code, (err) => {
-            if (err) return res.status(500).send('Error writing Python file.');
+            if (err) return res.status(500).send('Error writing Python file: ' + err.message);
 
-            exec(`python ${filePath}`, (runErr, runStdout, runStderr) => {
+            exec(`python3 ${filePath}`, (runErr, runStdout, runStderr) => {
                 if (runErr) {
                     return res.status(500).send(`Python Execution Error: ${runStderr}`);
                 }
                 res.send(runStdout);
-                fs.unlinkSync(filePath);
+                try {
+                    fs.unlinkSync(filePath);
+                } catch (unlinkErr) {
+                    console.error('Error cleaning up Python file:', unlinkErr.message);
+                }
             });
         });
-    } else if (language === 'html') {
-        res.setHeader('Content-Type', 'text/html');
-        res.send(code);
     } else {
         res.status(400).send('Unsupported language. Please use "java", "python", or "html".');
     }
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
