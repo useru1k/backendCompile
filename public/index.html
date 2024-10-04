@@ -27,11 +27,18 @@
     <div class="container">
         <h1>Code Compiler</h1>
         <textarea id="code" placeholder="Enter your code here..."></textarea>
-        <select id="language">
+        <!-- <select id="language">
             <option value="java">Java</option>
             <option value="python">Python</option>
             <option value="html">HTML</option>
+        </select> -->
+        <select id="language">
+            <option value="java">Java</option>
+            <option value="python">Python</option>
+            <option value="c">C</option>
+            <option value="cpp">C++</option>
         </select>
+        
         <button onclick="submitCode()">Compile and Run</button>
 
         <h2>Output</h2>
@@ -46,7 +53,7 @@
     console.log("Code:", code);
     console.log("Language:", language);
 
-    fetch('/compile', {
+    fetch('http://localhost:3000/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language })
